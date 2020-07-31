@@ -66,9 +66,9 @@ func SetupMysql(config Config) {
 	}
 
 	env := config.Env
-	err = utils.CheckEnv(env)
-	if err != nil {
-		log.Logger.Fatalw("err wrong env value ", "err", err)
+
+	if !env.IsAEnv() {
+		log.Logger.Fatalw("err wrong env value ", "err", utils.WrongEnvError)
 	}
 	gormLog := GormLogger{}
 	db.SetLogger(&gormLog)

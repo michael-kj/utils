@@ -20,9 +20,11 @@ func SetUpRedis(config Config) {
 	}
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: config.Password,
-		DB:       database,
+		Addr:         addr,
+		Password:     config.Password,
+		DB:           database,
+		PoolSize:     config.MaxOpen,
+		MinIdleConns: config.MaxIdle,
 	})
 	Redis = rdb
 	err = RedisHealthCheck()

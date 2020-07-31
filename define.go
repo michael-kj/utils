@@ -16,9 +16,19 @@ const (
 
 var WrongEnvError = errors.New("wrong env value")
 
-func CheckEnv(env Env) error {
-	if !env.IsAEnv() {
-		return WrongEnvError
+func EqualEnv(env interface{}, define Env) (bool, error) {
+	var e Env
+	switch env.(type) {
+	case string:
+		env, err := EnvString(env.(string))
+		if err != nil {
+			return false, err
+		}
+		e = env
+	case Env:
+		e = env.(Env)
+
 	}
-	return nil
+
+	return e == define, nil
 }
