@@ -1,13 +1,19 @@
 package utils
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kirinlabs/HttpRequest"
 	"github.com/michael-kj/utils/log"
+	"github.com/michael-kj/utils/storage"
 	"go.uber.org/automaxprocs/maxprocs"
 )
 
@@ -61,4 +67,43 @@ func SetUpGoMaxProcs() {
 
 	maxprocs.Set(maxprocs.Logger(maxprocsLog))
 
+}
+
+func RunGraceful(addr string, handler http.Handler) {
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: handler,
+	}
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Logger.Fatalw("start service failed", "err", err)
+		}
+	}()
+
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Logger.Infow("Shutting down server...")
+	if storage.Db != nil {
+		err := storage.Db.Close()
+		if err != nil {
+			log.Logger.Warnw("err when shutdown mysql connection", "err", err)
+
+		}
+	}
+	if storage.Redis != nil {
+		err := storage.Redis.Close()
+		if err != nil {
+			log.Logger.Warnw("err when shutdown redis connection", "err", err)
+
+		}
+	}
+
+	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Logger.Fatalw("Server forced to shutdown", "err", err)
+	}
+
+	log.Logger.Infow("Server stopped")
 }
