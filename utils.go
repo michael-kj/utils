@@ -92,3 +92,13 @@ func RunGraceful(addr string, handler http.Handler) {
 
 	log.Logger.Infow("Server stopped")
 }
+
+func SetGinMode(env Env) {
+	switch env {
+	case Online:
+		gin.SetMode(gin.ReleaseMode)
+	default:
+		gin.SetMode(gin.DebugMode)
+
+	}
+}
