@@ -13,7 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kirinlabs/HttpRequest"
 	"github.com/michael-kj/utils/log"
-	"github.com/michael-kj/utils/storage"
 	"go.uber.org/automaxprocs/maxprocs"
 )
 
@@ -84,20 +83,6 @@ func RunGraceful(addr string, handler http.Handler) {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Logger.Infow("Shutting down server...")
-	if storage.Db != nil {
-		err := storage.Db.Close()
-		if err != nil {
-			log.Logger.Warnw("err when shutdown mysql connection", "err", err)
-
-		}
-	}
-	if storage.Redis != nil {
-		err := storage.Redis.Close()
-		if err != nil {
-			log.Logger.Warnw("err when shutdown redis connection", "err", err)
-
-		}
-	}
 
 	var ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

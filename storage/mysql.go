@@ -32,17 +32,6 @@ type Time struct {
 	UpdatedAt *time.Time `json:"updatedAt,omitempty" gorm:"column:updated_at" swaggerignore:"true"`
 }
 
-type Config struct {
-	User     string
-	Password string
-	Host     string
-	Port     int
-	Database string
-	Env      utils.Env
-	MaxIdle  int
-	MaxOpen  int
-}
-
 type GormLogger struct{}
 
 func (*GormLogger) Print(v ...interface{}) {
