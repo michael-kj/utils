@@ -51,6 +51,7 @@ func Cors() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
 func maxprocsLog(format string, v ...interface{}) {
 	log.Logger.Info(fmt.Sprintf(format, v))
 
