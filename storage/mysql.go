@@ -54,7 +54,7 @@ func (*GormLogger) Print(v ...interface{}) {
 	}
 }
 
-func Setup(config Config) {
+func SetupMysql(config Config) {
 
 	gorm.DefaultCallback.Create().Remove("gorm:update_time_stamp")
 	gorm.DefaultCallback.Update().Remove("gorm:update_time_stamp")
@@ -85,7 +85,7 @@ func Setup(config Config) {
 
 	Db = db
 
-	err = HealthCheck()
+	err = MysqlHealthCheck()
 	if err != nil {
 		log.Logger.Fatalw("err when init storage and  ping storage server", "err", err)
 	}
@@ -93,7 +93,7 @@ func Setup(config Config) {
 	log.Logger.Infow("create storage client success", "config", config)
 }
 
-func HealthCheck() error {
+func MysqlHealthCheck() error {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second)
 	return Db.DB().PingContext(ctx)
 }
