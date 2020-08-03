@@ -6,14 +6,14 @@ import (
 )
 
 type Config struct {
-	User     string
-	Password string
-	Host     string
-	Port     int
-	Database string
-	Env      utils.Env
-	MaxIdle  int
-	MaxOpen  int
+	User     string    `json:"user"`
+	Password string    `json:"password"`
+	Host     string    `json:"host"`
+	Port     int       `json:"port"`
+	Database string    `json:"database"`
+	Env      utils.Env `json:"env"`
+	MaxIdle  int       `json:"maxIdle,omitempty"`
+	MaxOpen  int       `json:"maxOpen,omitempty"`
 }
 
 func CloseStorage() {
