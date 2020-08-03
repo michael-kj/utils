@@ -42,3 +42,15 @@ func SetUpGoMaxProcs() {
 	maxprocs.Set(maxprocs.Logger(maxprocsLog))
 
 }
+
+type IntSlice []int
+
+func (s IntSlice) Len() int           { return len(s) }
+func (s IntSlice) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s IntSlice) Less(i, j int) bool { return s[i] < s[j] }
+
+type StringSlice []string
+
+func (s StringSlice) Len() int           { return len(s) }
+func (s StringSlice) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s StringSlice) Less(i, j int) bool { return s[i] < s[j] }
