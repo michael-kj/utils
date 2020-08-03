@@ -1,6 +1,5 @@
 package log
 
-import "C"
 import (
 	"errors"
 	"fmt"
@@ -204,7 +203,7 @@ func getZapCores(encoder zapcore.Encoder, logFileName string, logProvider string
 	stdout := os.Stdout
 	var cores []zapcore.Core
 	if logProvider == "v1" {
-		//file-rotatelogs的文件名有bug，时分秒不消失，但是如果按照天来切分的话   问题不大
+		//file-rotatelogs的文件名有bug，时分秒不显示，但是如果按照天来切分的话   问题不大
 		logfile := getWriter(logFileName)
 
 		cores = append(cores,

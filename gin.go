@@ -121,7 +121,6 @@ func SetGlobalGin(engine *gin.Engine, env Env) {
 	//log的初始化必须放在最前面
 	e.Use(GinRecover())
 	e.Use(GinLog())
-
 	g = e.Group("/")
 
 }
