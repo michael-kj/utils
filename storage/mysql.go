@@ -49,7 +49,7 @@ func SetupMysql(config Config) {
 	gorm.DefaultCallback.Update().Remove("gorm:update_time_stamp")
 
 	dbUrl := fmt.Sprintf("%s:%s@(%s:%d)/%s?charset=utf8&parseTime=True&loc=Local", config.User, config.Password, config.Host, config.Port, config.Database)
-	db, err := gorm.Open("storage", dbUrl)
+	db, err := gorm.Open("mysql", dbUrl)
 	if err != nil {
 		log.Logger.Fatalw("err when open connection to storage ", "err", err)
 	}

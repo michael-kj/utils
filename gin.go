@@ -18,6 +18,21 @@ import (
 
 var e *gin.Engine
 var g *gin.RouterGroup
+var serviceRegister []GinServiceInterface
+
+type GinServiceInterface interface {
+	RegisterRouter()
+}
+
+func initRouter() {
+	for _, service := range serviceRegister {
+		service.RegisterRouter()
+	}
+}
+
+func RegisterService(service GinServiceInterface) {
+	serviceRegister = append(serviceRegister, service)
+}
 
 func GinLog() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -141,6 +156,7 @@ func RunGraceful(addr string, engine http.Handler) {
 	if engine == nil {
 		engine = GetGlobalEngine()
 	}
+	initRouter()
 	srv := &http.Server{
 		Addr:    addr,
 		Handler: engine,
