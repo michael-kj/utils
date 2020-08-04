@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/michael-kj/utils"
 	"github.com/michael-kj/utils/log"
+	server "github.com/michael-kj/utils/server"
 	"github.com/michael-kj/utils/storage"
 )
 
@@ -19,7 +20,7 @@ type WorldService struct {
 
 func init() {
 	service := WorldService{}
-	utils.RegisterService(&service)
+	server.RegisterService(&service)
 	//在这里注册自己的服务
 
 }
@@ -27,7 +28,7 @@ func init() {
 func (s *WorldService) RegisterRouter() {
 	//服务必须实现RegisterRouter，来注册路由
 
-	g := utils.GetGlobalGroup()
+	g := server.GetGlobalGroup()
 	// GlobalGroup为根："/"
 	my := g.Group("/v2")
 	my.GET("/hi", s.Hi)
@@ -46,7 +47,7 @@ type HelloService struct {
 
 func init() {
 	service := HelloService{}
-	utils.RegisterService(&service)
+	server.RegisterService(&service)
 	//在这里注册自己的服务
 
 }
@@ -58,7 +59,7 @@ func (s *HelloService) Hi(c *gin.Context) {
 func (s *HelloService) RegisterRouter() {
 	//服务必须实现RegisterRouter，来注册路由
 
-	g := utils.GetGlobalGroup()
+	g := server.GetGlobalGroup()
 	g.Use(MyGroupMiddleware)
 	// GlobalGroup为根："/"
 	my := g.Group("/v1")
@@ -101,14 +102,14 @@ func main() {
 	//	log.Logger.Error(err)
 	//}
 
-	utils.SetGlobalGin(nil, utils.Online, SayHi)
+	server.SetGlobalGin(nil, utils.Online, SayHi)
 	// engine 为nil时候会自动初始化全局路由，除了online环境以外，开启debug模式
 
 	//r:=utils.GetGlobalEngine()   //获取全局路由
 
 	//g := utils.GetGlobalGroup()  //获取全局根Group
 	//g.Use(SayHi)
-	utils.RunGraceful("127.0.0.1:8081", nil)
+	server.RunGraceful("127.0.0.1:8081", nil)
 	// nil的时候会使用全局路由
 	// 打开http://127.0.0.1:8081/api/hi
 

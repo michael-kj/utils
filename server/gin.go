@@ -1,7 +1,8 @@
-package utils
+package server
 
 import (
 	"context"
+	"github.com/michael-kj/utils"
 	"net"
 	"net/http"
 	"os"
@@ -110,8 +111,8 @@ func GinRecover() gin.HandlerFunc {
 	}
 }
 
-func SetGlobalGin(engine *gin.Engine, env Env, customMiddleware ...func(c *gin.Context)) {
-	// 如果使用自定义的engine的话，自己处理gin.SetMode，gin.SetMode必须放在gin.New初始化之前
+func SetGlobalGin(engine *gin.Engine, env utils.Env, customMiddleware ...func(c *gin.Context)) {
+	// 如果使用自定义的engine的话，自己处理gin.SetMode，server.SetMode必须放在gin.New初始化之前
 	if engine == nil {
 		SetGinMode(env)
 		e = gin.New()
@@ -184,9 +185,9 @@ func RunGraceful(addr string, engine http.Handler) {
 	log.Logger.Infow("Server stopped")
 }
 
-func SetGinMode(env Env) {
+func SetGinMode(env utils.Env) {
 	switch env {
-	case Online:
+	case utils.Online:
 		gin.SetMode(gin.ReleaseMode)
 	default:
 		gin.SetMode(gin.DebugMode)
