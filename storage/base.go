@@ -5,15 +5,26 @@ import (
 	"github.com/michael-kj/utils/log"
 )
 
-type Config struct {
+type BaseConfig struct {
 	User     string    `json:"user"`
 	Password string    `json:"password"`
 	Host     string    `json:"host"`
 	Port     int       `json:"port"`
-	Database string    `json:"database"`
 	Env      utils.Env `json:"env"`
-	MaxIdle  int       `json:"maxIdle,omitempty"`
-	MaxOpen  int       `json:"maxOpen,omitempty"`
+}
+
+type MysqlConfig struct {
+	BaseConfig
+	Database string `json:"database"`
+	MaxIdle  int    `json:"maxIdle,omitempty"`
+	MaxOpen  int    `json:"maxOpen,omitempty"`
+}
+
+type RedisConfig struct {
+	BaseConfig
+	Database int `json:"database"`
+	MinIdle  int `json:"minIdle,omitempty"`
+	MaxOpen  int `json:"maxOpen,omitempty"`
 }
 
 func CloseStorage() {

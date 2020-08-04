@@ -43,7 +43,7 @@ func (*GormLogger) Print(v ...interface{}) {
 	}
 }
 
-func SetupMysql(config Config) {
+func SetupMysql(config MysqlConfig) {
 
 	gorm.DefaultCallback.Create().Remove("gorm:update_time_stamp")
 	gorm.DefaultCallback.Update().Remove("gorm:update_time_stamp")
@@ -61,12 +61,11 @@ func SetupMysql(config Config) {
 	}
 	gormLog := GormLogger{}
 	db.SetLogger(&gormLog)
-	if config.MaxIdle != 0 {
-		db.DB().SetMaxIdleConns(config.MaxIdle)
+	if config.MaxIdle <= 0 {
+		config.MaxIdle = 10
 	}
-	if config.MaxOpen != 0 {
-		db.DB().SetMaxOpenConns(config.MaxIdle)
-	}
+	db.DB().SetMaxIdleConns(config.MaxIdle)
+	db.DB().SetMaxOpenConns(config.MaxOpen)
 
 	if env != utils.Online {
 		db.LogMode(true)

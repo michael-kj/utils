@@ -18,7 +18,7 @@ import (
 )
 
 var e *gin.Engine
-var g *gin.RouterGroup
+
 var serviceRegister []GinServiceInterface
 
 type GinServiceInterface interface {
@@ -111,7 +111,7 @@ func GinRecover() gin.HandlerFunc {
 	}
 }
 
-func SetGlobalGin(engine *gin.Engine, env utils.Env, customMiddleware ...func(c *gin.Context)) {
+func SetGlobalGin(engine *gin.Engine, env utils.Env) {
 	// 如果使用自定义的engine的话，自己处理gin.SetMode，server.SetMode必须放在gin.New初始化之前
 	if engine == nil {
 		SetGinMode(env)
@@ -119,17 +119,9 @@ func SetGlobalGin(engine *gin.Engine, env utils.Env, customMiddleware ...func(c 
 	} else {
 		e = engine
 	}
-	//log的初始化必须放在最前面
-	e.Use(GinRecover())
-	e.Use(GinLog())
-	for _, mid := range customMiddleware {
-		e.Use(mid)
-	}
-	g = e.Group("/")
-
 }
 func GetGlobalGroup() *gin.RouterGroup {
-	return g
+	return &e.RouterGroup
 
 }
 
