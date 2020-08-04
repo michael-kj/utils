@@ -12,6 +12,7 @@ require (
 	github.com/kirinlabs/HttpRequest v1.0.5
 	github.com/lestrrat-go/file-rotatelogs v2.3.0+incompatible
 	github.com/lestrrat-go/strftime v1.0.3 // indirect
+	github.com/prometheus/client_golang v1.7.1
 	github.com/tebeka/strftime v0.1.5 // indirect
 	go.uber.org/automaxprocs v1.3.0
 	go.uber.org/zap v1.15.0
