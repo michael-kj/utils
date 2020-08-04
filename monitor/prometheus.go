@@ -199,16 +199,10 @@ func (p *Prometheus) prometheusHandler() gin.HandlerFunc {
 	}
 }
 
-func (p *Prometheus) Use(s interface{}) {
-	switch s.(type) {
-	case *gin.Engine:
-		s.(*gin.Engine).GET(p.MetricsPath, p.prometheusHandler())
-		s.(*gin.Engine).Use(p.HandlerFunc())
-	case *gin.RouterGroup:
-		s.(*gin.RouterGroup).GET(p.MetricsPath, p.prometheusHandler())
-		s.(*gin.RouterGroup).Use(p.HandlerFunc())
+func (p *Prometheus) Use(s gin.IRoutes) {
+	s.GET(p.MetricsPath, p.prometheusHandler())
+	s.Use(p.HandlerFunc())
 
-	}
 }
 
 func (p *Prometheus) HandlerFunc() gin.HandlerFunc {

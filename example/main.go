@@ -108,13 +108,15 @@ func main() {
 	server.SetGlobalGin(nil, utils.Online, SayHi)
 	// engine 为nil时候会自动初始化全局路由，除了online环境以外，开启debug模式
 
-	//r:=server.GetGlobalEngine()   //获取全局路由
+	r := server.GetGlobalEngine() //获取全局路由
+	monitor.UsePprof(r)
 
 	g := server.GetGlobalGroup() //获取全局根Group
 	//g.Use(SayHi)
 
 	p := monitor.NewPrometheus("devops", "cmdb", "/metrics")
 	p.Use(g)
+
 	server.RunGraceful("127.0.0.1:8081", nil)
 	// nil的时候会使用全局路由
 	// 打开http://127.0.0.1:8081/api/hi
