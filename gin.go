@@ -110,7 +110,7 @@ func GinRecover() gin.HandlerFunc {
 	}
 }
 
-func SetGlobalGin(engine *gin.Engine, env Env) {
+func SetGlobalGin(engine *gin.Engine, env Env, customMiddleware ...func(c *gin.Context)) {
 	// 如果使用自定义的engine的话，自己处理gin.SetMode，gin.SetMode必须放在gin.New初始化之前
 	if engine == nil {
 		SetGinMode(env)
@@ -121,6 +121,9 @@ func SetGlobalGin(engine *gin.Engine, env Env) {
 	//log的初始化必须放在最前面
 	e.Use(GinRecover())
 	e.Use(GinLog())
+	for _, mid := range customMiddleware {
+		e.Use(mid)
+	}
 	g = e.Group("/")
 
 }
