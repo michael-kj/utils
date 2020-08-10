@@ -18,6 +18,7 @@ import (
 )
 
 var e *gin.Engine
+var g *gin.RouterGroup
 
 var serviceRegister []GinServiceInterface
 
@@ -120,9 +121,18 @@ func SetGlobalGin(engine *gin.Engine, env utils.Env) {
 		e = engine
 	}
 }
-func GetGlobalGroup() *gin.RouterGroup {
-	return &e.RouterGroup
 
+func GetGlobalGroup() *gin.RouterGroup {
+	if g == nil {
+		return &e.RouterGroup
+
+	}
+	return g
+
+}
+
+func SetGlobalGroup(group *gin.RouterGroup) {
+	g = group
 }
 
 func GetGlobalEngine() *gin.Engine {

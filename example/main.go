@@ -114,6 +114,7 @@ func main() {
 	// engine 为nil时候会自动初始化全局路由，除了online环境以外，开启debug模式
 
 	r := server.GetGlobalEngine() //获取全局路由engine
+	server.SetGlobalGroup(r.Group("/api/v1"))
 	monitor.UsePprof(r)
 
 	g := server.GetGlobalGroup() //获取全局根Group
