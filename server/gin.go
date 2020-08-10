@@ -2,25 +2,31 @@ package server
 
 import (
 	"context"
-	"github.com/michael-kj/utils"
+	"errors"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/gin-gonic/gin"
+	"github.com/michael-kj/utils"
 	"github.com/michael-kj/utils/log"
+	"go.uber.org/zap"
 )
 
 var e *gin.Engine
-var g *gin.RouterGroup
-
 var serviceRegister []GinServiceInterface
+var NotRegisteredErr = errors.New("router group not registered")
+var gs = routerGroups{groups: map[string]*gin.RouterGroup{}}
+
+type routerGroups struct {
+	groups map[string]*gin.RouterGroup
+	lock   sync.RWMutex
+}
 
 type GinServiceInterface interface {
 	RegisterRouter()
@@ -122,22 +128,33 @@ func SetGlobalGin(engine *gin.Engine, env utils.Env) {
 	}
 }
 
-func GetGlobalGroup() *gin.RouterGroup {
-	if g == nil {
-		return &e.RouterGroup
-
-	}
-	return g
-
-}
-
-func SetGlobalGroup(group *gin.RouterGroup) {
-	g = group
-}
-
 func GetGlobalEngine() *gin.Engine {
 	return e
 
+}
+
+func GetRegisteredGroup(path string) (*gin.RouterGroup, error) {
+	if path == "/" {
+		return &e.RouterGroup, nil
+	}
+
+	gs.lock.RLock()
+	defer gs.lock.RUnlock()
+	g, ok := gs.groups[path]
+	if !ok {
+		return nil, NotRegisteredErr
+	}
+	return g, nil
+
+}
+
+func RegisteredGroup(path string, baseGroup *gin.RouterGroup) {
+	if baseGroup == nil {
+		baseGroup = &e.RouterGroup
+	}
+	gs.lock.Lock()
+	gs.groups[path] = baseGroup.Group(path)
+	gs.lock.Unlock()
 }
 
 func Cors() gin.HandlerFunc {
