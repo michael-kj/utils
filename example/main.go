@@ -121,11 +121,12 @@ func main() {
 
 	rootGroup.Use(SayHi)
 	p := monitor.NewPrometheus("devops", "cmdb", "/metrics")
-	p.Use(rootGroup)
 
 	server.RegisteredGroup("/api/v1", rootGroup)
+	v1Group, _ := server.GetRegisteredGroup("/api/v1")
+	p.Use(v1Group)
 
-	monitor.UsePprof(rootGroup)
+	monitor.UsePprof(v1Group)
 
 	server.RunGraceful("127.0.0.1:8081", nil)
 	// nil的时候会使用全局路由

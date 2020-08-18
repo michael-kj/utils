@@ -6,6 +6,7 @@ import (
 	"github.com/kirinlabs/HttpRequest"
 	"github.com/michael-kj/utils/log"
 	"go.uber.org/automaxprocs/maxprocs"
+	"reflect"
 )
 
 func Post(url string, request, response interface{}, header map[string]string) error {
@@ -54,3 +55,43 @@ type StringSlice []string
 func (s StringSlice) Len() int           { return len(s) }
 func (s StringSlice) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s StringSlice) Less(i, j int) bool { return s[i] < s[j] }
+
+func All(empty bool, data ...interface{}) bool {
+	if len(data) == 0 {
+		return empty
+	}
+	isZero := false
+	for _, d := range data {
+		if d == nil {
+			isZero = true
+		} else {
+			v := reflect.ValueOf(d)
+			isZero = v.IsZero()
+		}
+		if isZero != empty {
+			return false
+		}
+	}
+	return true
+
+}
+
+func Any(empty bool, data ...interface{}) bool {
+	emptyDate := len(data) == 0
+	if emptyDate {
+		return emptyDate == empty
+	}
+	isZero := false
+	for _, d := range data {
+		if d == nil {
+			isZero = true
+		} else {
+			v := reflect.ValueOf(d)
+			isZero = v.IsZero()
+		}
+		if isZero == empty {
+			return true
+		}
+	}
+	return false
+}
