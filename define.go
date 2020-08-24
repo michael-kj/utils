@@ -12,6 +12,7 @@ const (
 	Qa
 	Pl
 	Local
+	Unknow
 )
 
 var WrongEnvError = errors.New("wrong env value")

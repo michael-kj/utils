@@ -9,9 +9,9 @@ import (
 	"fmt"
 )
 
-const _EnvName = "DevOnlineQaPlLocal"
+const _EnvName = "DevOnlineQaPlLocalUnknow"
 
-var _EnvIndex = [...]uint8{0, 3, 9, 11, 13, 18}
+var _EnvIndex = [...]uint8{0, 3, 9, 11, 13, 18, 24}
 
 func (i Env) String() string {
 	i -= 1
@@ -21,7 +21,7 @@ func (i Env) String() string {
 	return _EnvName[_EnvIndex[i]:_EnvIndex[i+1]]
 }
 
-var _EnvValues = []Env{1, 2, 3, 4, 5}
+var _EnvValues = []Env{1, 2, 3, 4, 5, 6}
 
 var _EnvNameToValueMap = map[string]Env{
 	_EnvName[0:3]:   1,
@@ -29,6 +29,7 @@ var _EnvNameToValueMap = map[string]Env{
 	_EnvName[9:11]:  3,
 	_EnvName[11:13]: 4,
 	_EnvName[13:18]: 5,
+	_EnvName[18:24]: 6,
 }
 
 // EnvString retrieves an enum value from the enum constants string name.
