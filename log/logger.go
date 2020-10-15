@@ -16,10 +16,11 @@ import (
 )
 
 var Logger *zap.SugaredLogger
+var Level *zap.AtomicLevel
 
 func init() {
 	var err error
-	Logger, err = DefaultSugarLogger()
+	Logger, Level, err = DefaultSugarLogger()
 	if err != nil {
 		panic(fmt.Sprintf("Log 初始化失败: %v", err))
 	}
@@ -34,26 +35,27 @@ type Config struct {
 	DefaultFiled map[string]interface{} `json:"defaultFiled,omitempty"`
 }
 
-func DefaultSugarLogger() (*zap.SugaredLogger, error) {
+func DefaultSugarLogger() (*zap.SugaredLogger, *zap.AtomicLevel, error) {
 	// 默认只输出info级别到标准输出
-	log, err := BuildSugarLogger(Config{"console", "info", "", false, map[string]interface{}{}})
+	log, level, err := BuildSugarLogger(Config{"console", "info", "", false, map[string]interface{}{}})
 
-	return log, err
+	return log, level, err
 
 }
 func SetUpLog(c Config) error {
 
-	log, err := BuildSugarLogger(c)
+	log, level, err := BuildSugarLogger(c)
 	Logger = log
+	Level = level
 	return err
 }
 
-func BuildSugarLogger(c Config) (*zap.SugaredLogger, error) {
+func BuildSugarLogger(c Config) (*zap.SugaredLogger, *zap.AtomicLevel, error) {
 
 	var l zapcore.Level
 	err := l.Set(c.Level)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	output := []string{"stdout"}
 	if c.Path != "" {
@@ -62,7 +64,7 @@ func BuildSugarLogger(c Config) (*zap.SugaredLogger, error) {
 		} else {
 			dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			output = append(output, filepath.Join(dir, c.Path))
 
@@ -95,10 +97,10 @@ func BuildSugarLogger(c Config) (*zap.SugaredLogger, error) {
 	}
 	logger, err := zapConfig.Build()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return logger.Sugar(), nil
+	return logger.Sugar(), &logLevel, nil
 
 }
 
