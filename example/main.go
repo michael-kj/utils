@@ -148,6 +148,8 @@ func main() {
 		log.Logger.Warn("warn")
 		log.Logger.Debug("debug")
 		log.Logger.Infow("info", "key", "value")
+		c.JSON(200, gin.H{"status": "ok"})
+
 	})
 
 	server.RunGraceful("127.0.0.1:8081", nil)
