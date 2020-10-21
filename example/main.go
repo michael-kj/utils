@@ -4,6 +4,8 @@ import (
 	"math/rand"
 	"time"
 
+	"go.uber.org/zap/zapcore"
+
 	"github.com/gin-gonic/gin"
 	"github.com/michael-kj/utils"
 	"github.com/michael-kj/utils/log"
@@ -125,12 +127,28 @@ func main() {
 
 	rootGroup.Use(SayHi)
 	p := monitor.NewPrometheus("devops", "cmdb", "/metrics")
+	rootGroup.GET("/log", func(c *gin.Context) {
+		levelStr := c.DefaultQuery("level", "")
+		var level zapcore.Level
+		level.Set(levelStr)
+		log.Level.SetLevel(level)
+		c.JSON(200, gin.H{"status": "ok"})
+
+	})
 
 	server.RegisteredGroup("/api/v1", rootGroup)
 	v1Group, _ := server.GetRegisteredGroup("/api/v1")
+
 	p.Use(v1Group)
 
 	monitor.UsePprof(v1Group)
+
+	v1Group.GET("/ping", func(c *gin.Context) {
+		log.Logger.Info("info")
+		log.Logger.Warn("warn")
+		log.Logger.Debug("debug")
+		log.Logger.Infow("info", "key", "value")
+	})
 
 	server.RunGraceful("127.0.0.1:8081", nil)
 	// nil的时候会使用全局路由
