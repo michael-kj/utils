@@ -42,35 +42,37 @@ func RegisterService(service GinServiceInterface) {
 	serviceRegister = append(serviceRegister, service)
 }
 
-func GinLog() gin.HandlerFunc {
+func GinLog(skip func(c *gin.Context) bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		path := c.Request.URL.Path
 		query := c.Request.URL.RawQuery
 
 		c.Next()
+		if !skip(c) {
 
-		end := time.Now()
-		latency := end.Sub(start)
+			end := time.Now()
+			latency := end.Sub(start)
 
-		if len(c.Errors) > 0 {
-			// Append error field if this is an erroneous request.
-			for _, e := range c.Errors.Errors() {
-				log.Logger.Desugar().Error(e)
+			if len(c.Errors) > 0 {
+				// Append error field if this is an erroneous request.
+				for _, e := range c.Errors.Errors() {
+					log.Logger.Desugar().Error(e)
+				}
+			} else {
+				log.Logger.Desugar().Info(path,
+					zap.Int("status", c.Writer.Status()),
+					zap.String("method", c.Request.Method),
+					zap.String("path", path),
+					zap.String("query", query),
+					zap.String("ip", c.ClientIP()),
+					zap.String("user-agent", c.Request.UserAgent()),
+					zap.String("time", end.Format(time.RFC3339)),
+					zap.String("latency", latency.String()),
+					//zap.Any("header",c.Request.Header),
+					//zap.Any("param",c.Params),
+				)
 			}
-		} else {
-			log.Logger.Desugar().Info(path,
-				zap.Int("status", c.Writer.Status()),
-				zap.String("method", c.Request.Method),
-				zap.String("path", path),
-				zap.String("query", query),
-				zap.String("ip", c.ClientIP()),
-				zap.String("user-agent", c.Request.UserAgent()),
-				zap.String("time", end.Format(time.RFC3339)),
-				zap.String("latency", latency.String()),
-				//zap.Any("header",c.Request.Header),
-				//zap.Any("param",c.Params),
-			)
 		}
 	}
 }
