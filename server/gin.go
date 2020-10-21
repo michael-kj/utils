@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -60,7 +61,10 @@ func GinLog(skip func(c *gin.Context) bool) gin.HandlerFunc {
 					log.Logger.Desugar().Error(e)
 				}
 			} else {
-				log.Logger.Desugar().Info(path,
+				Cyan := 36
+				data := fmt.Sprintf("\x1b[%dm%s\x1b[0m", uint8(Cyan), path)
+
+				log.Logger.Desugar().Info(data,
 					zap.Int("status", c.Writer.Status()),
 					zap.String("method", c.Request.Method),
 					zap.String("path", path),

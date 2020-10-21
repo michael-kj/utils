@@ -72,6 +72,10 @@ func (s *HelloService) RegisterRouter() {
 		panic("An unexpected error happen!")
 	})
 }
+func skipLog(c *gin.Context) bool {
+	path := c.Request.URL.Path
+	return path == "/health_check" || path == "/metrics"
+}
 
 func main() {
 
@@ -117,7 +121,7 @@ func main() {
 
 	rootGroup, _ := server.GetRegisteredGroup("/")
 	rootGroup.Use(server.GinRecover())
-	rootGroup.Use(server.GinLog())
+	rootGroup.Use(server.GinLog(skipLog))
 
 	rootGroup.Use(SayHi)
 	p := monitor.NewPrometheus("devops", "cmdb", "/metrics")
