@@ -83,7 +83,6 @@ func GinLog(skip func(c *gin.Context) bool) gin.HandlerFunc {
 					zap.Int("status", c.Writer.Status()),
 					zap.String("method", c.Request.Method),
 					zap.String("ip", c.ClientIP()),
-					zap.String("time", end.Format(time.RFC3339)),
 					zap.String("latency", latency.String()),
 					zap.String("body", body),
 
