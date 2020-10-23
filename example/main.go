@@ -79,6 +79,11 @@ func skipLog(c *gin.Context) bool {
 	return path == "/health_check" || path == "/metrics"
 }
 
+type Person struct {
+	Age  int
+	Name string
+}
+
 func main() {
 
 	utils.SetUpGoMaxProcs()
@@ -149,6 +154,18 @@ func main() {
 		log.Logger.Debug("debug")
 		log.Logger.Infow("info", "key", "value")
 		c.JSON(200, gin.H{"status": "ok"})
+
+	})
+
+	v1Group.POST("/pong", func(c *gin.Context) {
+		p := Person{}
+		c.ShouldBindJSON(&p)
+		c.JSON(200, gin.H{"person": p})
+
+	})
+
+	v1Group.POST("/panic", func(c *gin.Context) {
+		panic("aaaa")
 
 	})
 

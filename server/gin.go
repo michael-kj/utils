@@ -1,9 +1,11 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -43,13 +45,33 @@ func RegisterService(service GinServiceInterface) {
 	serviceRegister = append(serviceRegister, service)
 }
 
+func buildPath(c *gin.Context) string {
+	path := c.Request.URL.Path
+	if c.Request.URL.RawQuery != "" {
+		path = fmt.Sprintf("%s?%s", c.Request.URL.Path, c.Request.URL.RawQuery)
+	}
+	Cyan := 36
+	path = fmt.Sprintf("\x1b[%dm%s\x1b[0m", uint8(Cyan), path)
+	return path
+}
+func buildBody(c *gin.Context) string {
+	body, err := c.GetRawData()
+	if err != nil {
+		body = []byte("err when get request body ")
+	}
+	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+	return string(body)
+}
+
 func GinLog(skip func(c *gin.Context) bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		start := time.Now()
-		path := fmt.Sprintf("%s?%s", c.Request.URL.Path, c.Request.URL.RawQuery)
-
-		c.Next()
-		if !skip(c) {
+		if skip(c) {
+			c.Next()
+		} else {
+			start := time.Now()
+			path := buildPath(c)
+			body := buildBody(c)
+			c.Next()
 
 			end := time.Now()
 			latency := end.Sub(start)
@@ -59,24 +81,19 @@ func GinLog(skip func(c *gin.Context) bool) gin.HandlerFunc {
 					log.Logger.Desugar().Error(e)
 				}
 			} else {
-				Cyan := 36
-				data := fmt.Sprintf("\x1b[%dm%s\x1b[0m", uint8(Cyan), path)
-				body, err := c.GetRawData()
-				if err != nil {
-					body = []byte("err when get request body ")
-				}
-				log.Logger.Desugar().Info(data,
+				log.Logger.Desugar().Info(path,
 					zap.Int("status", c.Writer.Status()),
 					zap.String("method", c.Request.Method),
 					zap.String("ip", c.ClientIP()),
 					zap.String("time", end.Format(time.RFC3339)),
 					zap.String("latency", latency.String()),
-					zap.String("body", string(body)),
+					zap.String("body", body),
 
 					//zap.String("user-agent", c.Request.UserAgent()),
 					//zap.Any("header",c.Request.Header),
 				)
 			}
+
 		}
 	}
 }
@@ -99,14 +116,15 @@ func GinRecover() gin.HandlerFunc {
 				if brokenPipe {
 					log.Logger.Desugar().Error("broken connection", zap.Any("err", err))
 				} else {
-					log.Logger.Desugar().Error(c.Request.URL.Path,
+					body := buildBody(c)
+					path := buildPath(c)
+					log.Logger.Desugar().Error(path,
 						zap.Any("error", err),
-						//zap.Int("status", c.Writer.Status()),
+						zap.Int("status", c.Writer.Status()),
 						zap.String("method", c.Request.Method),
-						zap.String("path", c.Request.URL.Path),
-						zap.String("query", c.Request.URL.RawQuery),
 						zap.String("ip", c.ClientIP()),
 						zap.String("user-agent", c.Request.UserAgent()),
+						zap.String("body", body),
 					)
 				}
 
