@@ -50,8 +50,6 @@ func buildPath(c *gin.Context) string {
 	if c.Request.URL.RawQuery != "" {
 		path = fmt.Sprintf("%s?%s", c.Request.URL.Path, c.Request.URL.RawQuery)
 	}
-	Cyan := 36
-	path = fmt.Sprintf("\x1b[%dm%s\x1b[0m", uint8(Cyan), path)
 	return path
 }
 func buildBody(c *gin.Context) string {

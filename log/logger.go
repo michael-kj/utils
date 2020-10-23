@@ -27,6 +27,25 @@ func init() {
 
 }
 
+// Color represents a text color.
+type Color uint8
+
+// Add adds the coloring to the given string.
+func (c Color) Add(s string) string {
+	return fmt.Sprintf("\x1b[%dm%s\x1b[0m", uint8(c), s)
+}
+
+const (
+	Black Color = iota + 30
+	Red
+	Green
+	Yellow
+	Blue
+	Magenta
+	Cyan
+	White
+)
+
 type Config struct {
 	Format       string                 `json:"format"` //console 或 json
 	Level        string                 `json:"level"`
@@ -51,9 +70,19 @@ func SetUpLog(c Config) error {
 }
 
 func ShortColorCallerEncoder(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEncoder) {
-	Green := 36
-	data := fmt.Sprintf("\x1b[%dm%s\x1b[0m", uint8(Green), caller.TrimmedPath())
-	enc.AppendString(data)
+	enc.AppendString(Green.Add(caller.TrimmedPath()))
+}
+
+func TimeLayoutEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+	type appendTimeEncoder interface {
+		AppendTimeLayout(time.Time, string)
+	}
+	layout := "2006-01-02T15:04:05.000Z0700"
+	if enc, ok := enc.(appendTimeEncoder); ok {
+		enc.AppendTimeLayout(t, layout)
+		return
+	}
+	enc.AppendString(Cyan.Add(t.Format(layout)))
 }
 
 func BuildSugarLogger(c Config) (*zap.SugaredLogger, *zap.AtomicLevel, error) {
@@ -86,10 +115,25 @@ func BuildSugarLogger(c Config) (*zap.SugaredLogger, *zap.AtomicLevel, error) {
 		MessageKey:     "msg",
 		StacktraceKey:  "stacktrace",
 		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
 		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   ShortColorCallerEncoder,
+	}
+
+	switch c.Format {
+	case "json":
+		encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+		encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+
+	case "console":
+		encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		encoderConfig.EncodeCaller = ShortColorCallerEncoder
+		encoderConfig.EncodeTime = TimeLayoutEncoder
+
+	default:
+		encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+		encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
+		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+
 	}
 
 	zapConfig := zap.Config{

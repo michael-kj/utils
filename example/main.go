@@ -85,20 +85,19 @@ type Person struct {
 }
 
 func main() {
-
-	utils.SetUpGoMaxProcs()
-	// 自动设置cpu个数，主要应用于设置了资源限制的容器应用
-
 	err := log.SetUpLog(log.Config{Format: "console", Level: "debug", Path: "/tmp/a.log", Development: false, DefaultFiled: nil})
 	//err := log.SetRotateLog(log.Config{"console", "info", "/tmp/a.log", true, nil}, "v2")
 	// SetUpLog创建的全局日志不会做切分轮转，SetRotateLog v1会按照24小时进行轮转切分，v2按照1GB进行文件切分
 	if err != nil {
 		panic(err.Error())
 	}
+	utils.SetUpGoMaxProcs()
+	// 自动设置cpu个数，主要应用于设置了资源限制的容器应用
 
 	log.Logger.Info("info")
 	log.Logger.Warn("warn")
 	log.Logger.Debug("debug")
+	log.Logger.Error("err")
 	log.Logger.Infow("info", "key", "value")
 	// SetupMysql,SetUpRedis会检查mysql,redis链接，如果失败会os.exist(1)
 	//mysqlConfig := storage.MysqlConfig{BaseConfig: storage.BaseConfig{User: "root", Password: "root", Host: "127.0.0.1", Port: 3306, Env: utils.Dev}, Database: "test", MaxIdle: 10, MaxOpen: 20}
@@ -151,6 +150,7 @@ func main() {
 	v1Group.GET("/ping", func(c *gin.Context) {
 		log.Logger.Info("info")
 		log.Logger.Warn("warn")
+		log.Logger.Error("err")
 		log.Logger.Debug("debug")
 		log.Logger.Infow("info", "key", "value")
 		c.JSON(200, gin.H{"status": "ok"})
