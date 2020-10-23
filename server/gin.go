@@ -46,8 +46,7 @@ func RegisterService(service GinServiceInterface) {
 func GinLog(skip func(c *gin.Context) bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
-		path := c.Request.URL.Path
-		query := c.Request.URL.RawQuery
+		path := fmt.Sprintf("%s?%s", c.Request.URL.Path, c.Request.URL.RawQuery)
 
 		c.Next()
 		if !skip(c) {
@@ -56,25 +55,26 @@ func GinLog(skip func(c *gin.Context) bool) gin.HandlerFunc {
 			latency := end.Sub(start)
 
 			if len(c.Errors) > 0 {
-				// Append error field if this is an erroneous request.
 				for _, e := range c.Errors.Errors() {
 					log.Logger.Desugar().Error(e)
 				}
 			} else {
 				Cyan := 36
 				data := fmt.Sprintf("\x1b[%dm%s\x1b[0m", uint8(Cyan), path)
-
+				body, err := c.GetRawData()
+				if err != nil {
+					body = []byte("err when get request body ")
+				}
 				log.Logger.Desugar().Info(data,
 					zap.Int("status", c.Writer.Status()),
 					zap.String("method", c.Request.Method),
-					zap.String("path", path),
-					zap.String("query", query),
 					zap.String("ip", c.ClientIP()),
-					zap.String("user-agent", c.Request.UserAgent()),
 					zap.String("time", end.Format(time.RFC3339)),
 					zap.String("latency", latency.String()),
+					zap.String("body", string(body)),
+
+					//zap.String("user-agent", c.Request.UserAgent()),
 					//zap.Any("header",c.Request.Header),
-					//zap.Any("param",c.Params),
 				)
 			}
 		}
