@@ -169,6 +169,8 @@ func main() {
 
 	})
 
+	server.RegisterDoc(rootGroup, "/doc/index", "http://127.0.0.1:8081", "http://127.0.0.1:8081/swagger/doc.json")
+
 	server.RunGraceful("127.0.0.1:8081", nil)
 	// nil的时候会使用全局路由
 	// 打开http://127.0.0.1:8081/api/v1/hi

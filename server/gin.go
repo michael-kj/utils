@@ -1,3 +1,5 @@
+//go:generate statik -src=./static/swagger -f -p statik -dest ./static
+
 package server
 
 import (
@@ -13,11 +15,14 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"text/template"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/michael-kj/utils"
 	"github.com/michael-kj/utils/log"
+	_ "github.com/michael-kj/utils/static/statik"
+	"github.com/rakyll/statik/fs"
 	"go.uber.org/zap"
 )
 
@@ -233,4 +238,92 @@ func SetGinMode(env utils.Env) {
 		gin.SetMode(gin.DebugMode)
 
 	}
+}
+
+var Doc = `<!-- HTML for static distribution bundle build -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Swagger UI</title>
+  <link rel="stylesheet" type="text/css" href="{{.StaticPath}}swagger-ui.css" >
+  <link rel="icon" type="image/png" href="{{.StaticPath}}favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="{{.StaticPath}}favicon-16x16.png" sizes="16x16" />
+  <style>
+    html
+    {
+      box-sizing: border-box;
+      overflow: -moz-scrollbars-vertical;
+      overflow-y: scroll;
+    }
+
+    *,
+    *:before,
+    *:after
+    {
+      box-sizing: inherit;
+    }
+
+    body
+    {
+      margin:0;
+      background: #fafafa;
+    }
+  </style>
+</head>
+
+<body>
+<div id="swagger-ui"></div>
+
+<script src="{{.StaticPath}}swagger-ui-bundle.js" charset="UTF-8"> </script>
+<script src="{{.StaticPath}}swagger-ui-standalone-preset.js" charset="UTF-8"> </script>
+<script>
+  window.onload = function() {
+    // Begin Swagger UI call region
+    const ui = SwaggerUIBundle({
+      url: "{{.JsonDocPath}}",
+      dom_id: '#swagger-ui',
+      deepLinking: true,
+      presets: [
+        SwaggerUIBundle.presets.apis,
+        SwaggerUIStandalonePreset
+      ],
+      plugins: [
+        SwaggerUIBundle.plugins.DownloadUrl
+      ],
+      layout: "StandaloneLayout"
+    })
+    // End Swagger UI call region
+
+    window.ui = ui
+  }
+</script>
+</body>
+</html>
+
+`
+
+func loadSwaggerFile(router *gin.RouterGroup) {
+	statikFS, err := fs.New()
+	if err != nil {
+		fmt.Println(err)
+	}
+	router.StaticFS("/static/swagger", statikFS)
+
+}
+
+func RegisterDoc(router *gin.RouterGroup, routerPath string, host string, JsonDocPath string) {
+	loadSwaggerFile(router)
+	router.GET(routerPath, func(c *gin.Context) {
+		tmpl, _ := template.New("docIndex").Parse(Doc)
+		err := tmpl.Execute(c.Writer, struct {
+			StaticPath  string
+			JsonDocPath string
+		}{StaticPath: host + "/static/swagger/",
+			JsonDocPath: JsonDocPath})
+		if err != nil {
+			fmt.Println(err)
+		}
+	})
+
 }
