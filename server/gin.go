@@ -79,16 +79,15 @@ func GinLog(skip func(c *gin.Context) bool) gin.HandlerFunc {
 					log.Logger.Desugar().Error(e)
 				}
 			} else {
-				log.Logger.Desugar().Info(path,
-					zap.Int("status", c.Writer.Status()),
+				log.Logger.Desugar().With(zap.Int("status", c.Writer.Status()),
 					zap.String("method", c.Request.Method),
 					zap.String("ip", c.ClientIP()),
 					zap.String("latency", latency.String()),
 					zap.String("body", body),
+					zap.String("query", c.Request.URL.RawQuery),
+					zap.String("path", path)).Info("request info")//zap.String("user-agent", c.Request.UserAgent()),
+				//zap.Any("header",c.Request.Header),
 
-					//zap.String("user-agent", c.Request.UserAgent()),
-					//zap.Any("header",c.Request.Header),
-				)
 			}
 
 		}

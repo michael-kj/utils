@@ -85,8 +85,8 @@ type Person struct {
 }
 
 func main() {
-	err := log.SetUpLog(log.Config{Format: "console", Level: "debug", Path: "/tmp/a.log", Development: false, DefaultFiled: nil})
-	//err := log.SetRotateLog(log.Config{"console", "info", "/tmp/a.log", true, nil}, "v2")
+	//log.SetUpLog(log.Config{Format: "json", Level: "debug", Path: "/tmp/a.log", Development: false, DefaultFiled: nil})
+	err := log.SetRotateLog(log.Config{"json", "info", "/tmp/a.log", true, nil}, "time")
 	// SetUpLog创建的全局日志不会做切分轮转，SetRotateLog v1会按照24小时进行轮转切分，v2按照1GB进行文件切分
 	if err != nil {
 		panic(err.Error())

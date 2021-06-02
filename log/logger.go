@@ -84,11 +84,41 @@ func TimeLayoutEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	}
 	enc.AppendString(Cyan.Add(t.Format(layout)))
 }
+func buildBaseEncoderConfig() zapcore.EncoderConfig {
+	return zapcore.EncoderConfig{
+		TimeKey:        "time",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		MessageKey:     "msg",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeDuration: zapcore.SecondsDurationEncoder,
+		EncodeLevel:    zapcore.CapitalLevelEncoder,
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+	}
+}
 
-func BuildSugarLogger(c Config) (*zap.SugaredLogger, *zap.AtomicLevel, error) {
+func buildConsoleEncoderConfig() zapcore.EncoderConfig {
+	encoderConfig := buildBaseEncoderConfig()
+	encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	encoderConfig.EncodeCaller = ShortColorCallerEncoder
+	//encoderConfig.EncodeTime = TimeLayoutEncoder
+	return encoderConfig
+}
 
+func buildAtomicLevel(level string) (*zap.AtomicLevel, error) {
 	var l zapcore.Level
-	err := l.Set(c.Level)
+	err := l.Set(level)
+	if err != nil {
+		return nil, err
+	}
+	logLevel := zap.NewAtomicLevelAt(l)
+	return &logLevel, nil
+}
+func BuildSugarLogger(c Config) (*zap.SugaredLogger, *zap.AtomicLevel, error) {
+	logLevel, err := buildAtomicLevel(c.Level)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -106,38 +136,22 @@ func BuildSugarLogger(c Config) (*zap.SugaredLogger, *zap.AtomicLevel, error) {
 		}
 	}
 
-	logLevel := zap.NewAtomicLevelAt(l)
-	encoderConfig := zapcore.EncoderConfig{
-		TimeKey:        "time",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		MessageKey:     "msg",
-		StacktraceKey:  "stacktrace",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeDuration: zapcore.SecondsDurationEncoder,
-	}
+	var encoderConfig zapcore.EncoderConfig
 
 	switch c.Format {
 	case "json":
-		encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
-		encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
-		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+		encoderConfig = buildBaseEncoderConfig()
 
 	case "console":
-		encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-		encoderConfig.EncodeCaller = ShortColorCallerEncoder
-		encoderConfig.EncodeTime = TimeLayoutEncoder
+		encoderConfig = buildConsoleEncoderConfig()
 
 	default:
-		encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
-		encoderConfig.EncodeCaller = zapcore.ShortCallerEncoder
-		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+		encoderConfig = buildBaseEncoderConfig()
 
 	}
 
 	zapConfig := zap.Config{
-		Level:            logLevel, // 日志级别
+		Level:            *logLevel, // 日志级别
 		Development:      c.Development,
 		Encoding:         c.Format,       // 输出格式 console 或 json
 		EncoderConfig:    encoderConfig,  // 编码器配置
@@ -150,7 +164,7 @@ func BuildSugarLogger(c Config) (*zap.SugaredLogger, *zap.AtomicLevel, error) {
 		return nil, nil, err
 	}
 
-	return logger.Sugar(), &logLevel, nil
+	return logger.Sugar(), logLevel, nil
 
 }
 
@@ -184,46 +198,12 @@ func getWriter(output string) io.Writer {
 	return hook
 }
 
-func enableLevel(settingLevel zapcore.Level) zap.LevelEnablerFunc {
-	return zap.LevelEnablerFunc(func(logLevel zapcore.Level) bool {
-		return logLevel >= settingLevel
-	})
-}
+func SetRotateLog(c Config, rotateType string) error {
 
-func SetRotateLog(c Config, logProvider string) error {
-	var l zapcore.Level
-	err := l.Set(c.Level)
+	logLevel, err := buildAtomicLevel(c.Level)
 	if err != nil {
 		return err
 	}
-
-	encoderConfig := zapcore.EncoderConfig{
-		TimeKey:        "time",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		MessageKey:     "msg",
-		StacktraceKey:  "stacktrace",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
-		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   ShortColorCallerEncoder,
-	}
-	var encoder zapcore.Encoder
-
-	switch c.Format {
-
-	case "console":
-		encoder = zapcore.NewConsoleEncoder(encoderConfig)
-	case "json":
-
-		encoder = zapcore.NewJSONEncoder(encoderConfig)
-	default:
-		return errors.New("wrong log format set ,only accept value: console or json ")
-
-	}
-
 	logFile := ""
 	if c.Path == "" {
 		panic(errors.New("path for log file is empty "))
@@ -240,30 +220,44 @@ func SetRotateLog(c Config, logProvider string) error {
 
 	}
 
-	cores := getZapCores(encoder, logFile, logProvider, l)
+	cores := getZapCores(c.Format, logFile, rotateType, logLevel)
 
 	core := zapcore.NewTee(cores...)
 
 	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))
 	Logger = logger.Sugar()
+	Level = logLevel
+
 	return nil
 
 }
 
-func getZapCores(encoder zapcore.Encoder, logFileName string, logProvider string, settingLogLevel zapcore.Level) []zapcore.Core {
+func getZapCores(format string, logFileName string, rotateType string, settingLogLevel *zap.AtomicLevel) []zapcore.Core {
 
 	stdout := os.Stdout
 	var cores []zapcore.Core
-	if logProvider == "v1" {
-		//file-rotatelogs的文件名有bug，时分秒不显示，但是如果按照天来切分的话   问题不大
+	consoleEncoder := zapcore.NewConsoleEncoder(buildConsoleEncoderConfig())
+	var baseEncoder zapcore.Encoder
+	switch format {
+
+	case "console":
+		baseEncoder = consoleEncoder
+	case "json":
+		baseEncoder = zapcore.NewJSONEncoder(buildBaseEncoderConfig())
+
+	default:
+		baseEncoder = consoleEncoder
+
+	}
+	switch rotateType {
+	case "file":
 		logfile := getWriter(logFileName)
 
 		cores = append(cores,
-			zapcore.NewCore(encoder, zapcore.AddSync(stdout), enableLevel(settingLogLevel)),
-			zapcore.NewCore(encoder, zapcore.AddSync(logfile), enableLevel(settingLogLevel)),
+			zapcore.NewCore(consoleEncoder, zapcore.AddSync(stdout), settingLogLevel),
+			zapcore.NewCore(baseEncoder, zapcore.AddSync(logfile), settingLogLevel),
 		)
-
-	} else {
+	case "time":
 		hook := &lumberjack.Logger{
 			Filename:   logFileName,
 			MaxSize:    1024, // MB
@@ -273,10 +267,12 @@ func getZapCores(encoder zapcore.Encoder, logFileName string, logProvider string
 		}
 
 		cores = append(cores,
-			zapcore.NewCore(encoder, zapcore.AddSync(stdout), enableLevel(settingLogLevel)),
-			zapcore.NewCore(encoder, zapcore.AddSync(hook), enableLevel(settingLogLevel)),
+			zapcore.NewCore(consoleEncoder, zapcore.AddSync(stdout), settingLogLevel),
+			zapcore.NewCore(baseEncoder, zapcore.AddSync(hook), settingLogLevel),
 		)
+
 	}
+
 	return cores
 
 }
