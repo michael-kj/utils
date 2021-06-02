@@ -250,14 +250,14 @@ func getZapCores(format string, logFileName string, rotateType string, settingLo
 
 	}
 	switch rotateType {
-	case "file":
+	case "time":
 		logfile := getWriter(logFileName)
 
 		cores = append(cores,
 			zapcore.NewCore(consoleEncoder, zapcore.AddSync(stdout), settingLogLevel),
 			zapcore.NewCore(baseEncoder, zapcore.AddSync(logfile), settingLogLevel),
 		)
-	case "time":
+	case "chunk":
 		hook := &lumberjack.Logger{
 			Filename:   logFileName,
 			MaxSize:    1024, // MB
