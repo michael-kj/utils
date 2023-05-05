@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239 // indirect
-	github.com/gin-gonic/gin v1.6.3
+	github.com/gin-gonic/gin v1.9.0
 	github.com/go-redis/redis/v8 v8.0.0-beta.7
 	github.com/jehiah/go-strftime v0.0.0-20171201141054-1d33003b3869 // indirect
 	github.com/jinzhu/gorm v1.9.15
@@ -17,4 +17,5 @@ require (
 	go.uber.org/automaxprocs v1.3.0
 	go.uber.org/zap v1.15.0
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
+	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
